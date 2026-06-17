@@ -17,21 +17,19 @@ straight from the assignment's template), and it quietly violated two explicit
 requirements: the restock function could only ever emit one reason, and the
 availability check ignored expiry entirely. A plausible-looking, test-passing
 program was wrong against the spec. Second, when I added the Markdown report, the
-AI generated table rows that interpolated a failure reason directly into a cell —
+AI generated table rows that interpolated a failure reason directly into a cell
 and failure reasons can contain the `|` character, which silently corrupts a
 Markdown table. The code "worked" on the happy path and would have shipped broken.
 
-**How testing helped me evaluate AI-generated code.** Tests were the forcing
-function that turned vague unease into concrete verdicts. The moment I made
-expiry block fulfillment, five existing tests failed — and that failure was
-*informative*: it proved the old tests had encoded the wrong behavior (expecting
+**How testing helped me evaluate AI-generated code.** The moment AI made
+expiry block fulfillment, five existing tests failed, and that failure was
+*informative* insomuch that it proved the old tests had encoded the wrong behavior (expecting
 expired flour to be usable). Tests also pinned the new rules so they could not
 silently regress: a dedicated test for "expiring **and** low keeps both reasons"
 is the only thing that actually guarantees the multiple-reasons requirement holds.
-Without tests, I would have been trusting prose.
 
-**What I changed or rejected.** I rejected the baseline's single-reason restock
-logic and the assumption that quantity alone determines availability. I accepted
+**What I changed or rejected.** AI rejected the baseline's single-reason restock
+logic and the assumption that quantity alone determines availability. AI accepted
 and fixed the AI reviewer's catch about Markdown pipe-escaping and its point that
 a menu item with less than one serving's worth of stock should still be disabled.
 I rejected its concern about duplicate inventory rows, because the data model is
@@ -45,10 +43,7 @@ every later choice (which tests get fixed dates, why some orders fail) stayed
 consistent with one documented premise instead of drifting. It also let me hand
 the same context to a second AI reviewer cheaply.
 
-**What I would do differently.** I would write the specification and a couple of
+**What I would do differently.** I would do some test driven development (TDD) and write the specification and a couple of
 characterization tests *before* asking AI to touch the code, so the requirements
 are encoded as executable checks from the start rather than reconstructed after
-the fact. I would also bring the adversarial second reviewer in earlier — it
-found a real bug in one pass — instead of treating review as a final step.
-
-(~520 words)
+the fact. I would also recalibrate the prompts bringing the second AI reviewer in earlier in the project since there was a late stage bug found.
