@@ -1,11 +1,15 @@
 # Cloud Kitchen Inventory Simulation
 
+> **Johns Hopkins University — Module 3 / Assignment 3:** AI-Assisted Coding for
+> a Cloud Kitchen Inventory Simulation.
+
 A Python simulation of one shift in a delivery-only cloud kitchen where multiple
 brands share one pantry. It processes orders against recipe-linked inventory,
 fulfills them all-or-nothing with expiry-aware availability, deducts stock
 cumulatively, plans restocking, and produces a business summary.
 
-Built for an AI-assisted coding assignment (see `WRITEUP.md`).
+Built as an AI-assisted coding assignment using Claude (implementation) and
+OpenAI Codex (independent review) — see `WRITEUP.md` and `AI_USAGE_LOG.md`.
 
 ## Requirements
 - Python 3.10+ (developed on 3.14). Standard library only — no dependencies.
