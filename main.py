@@ -26,6 +26,8 @@ REASON_EXPIRED = "Expired"
 REASON_EXPIRING_SOON = "Expiring soon"
 REASON_OUT_OF_STOCK = "Out of stock"
 REASON_RUNNING_LOW = "Running low on stock"
+REASON_NOT_IN_INVENTORY = "Not in inventory"
+REASON_INSUFFICIENT_FOR_ORDER = "Insufficient quantity for order"
 
 
 def load_recipes():
@@ -196,6 +198,7 @@ def check_inventory_availability(inventory_data, requirements, reference_date=No
                 "ingredient": requirement["name"],
                 "required_qty_grams": requirement["required_qty_grams"],
                 "available_qty_grams": available_qty,
+                "expiry_date": inventory_item.get("expiry_date") if inventory_item else None,
                 "is_expired": is_expired,
                 "is_available": is_available,
                 "reason": reason,
@@ -206,6 +209,56 @@ def check_inventory_availability(inventory_data, requirements, reference_date=No
             all_available = False
 
     return {"all_available": all_available, "details": availability_results}
+
+
+def build_failed_order_restock_entry(availability_detail):
+    """Create a restock entry for an ingredient that blocked a specific order."""
+    available_qty = availability_detail["available_qty_grams"]
+    failure_reason = availability_detail["reason"]
+
+    if failure_reason == "Expired":
+        restock_reason = REASON_EXPIRED
+        qty_needed_grams = PAR_LEVEL_GRAMS
+    elif failure_reason == "Not in inventory":
+        restock_reason = REASON_NOT_IN_INVENTORY
+        qty_needed_grams = PAR_LEVEL_GRAMS
+    elif available_qty == 0:
+        restock_reason = REASON_OUT_OF_STOCK
+        qty_needed_grams = PAR_LEVEL_GRAMS
+    else:
+        restock_reason = REASON_INSUFFICIENT_FOR_ORDER
+        qty_needed_grams = max(PAR_LEVEL_GRAMS - available_qty, 0)
+
+    return {
+        "item": availability_detail["ingredient"],
+        "qty_needed_grams": qty_needed_grams,
+        "reasons": [restock_reason],
+        "reason": restock_reason,
+        "expiry_date": availability_detail.get("expiry_date"),
+    }
+
+
+def merge_restock_recommendation(restock_data, recommendation):
+    """Merge a recommendation into restock_data without losing existing reasons."""
+    for item in restock_data:
+        if item["item"] != recommendation["item"]:
+            continue
+
+        existing_reasons = item.get("reasons", item["reason"].split("; "))
+        for reason in recommendation.get("reasons", [recommendation["reason"]]):
+            if reason not in existing_reasons:
+                existing_reasons.append(reason)
+
+        item["reasons"] = existing_reasons
+        item["reason"] = "; ".join(existing_reasons)
+        item["qty_needed_grams"] = max(
+            item["qty_needed_grams"], recommendation["qty_needed_grams"]
+        )
+        if not item.get("expiry_date"):
+            item["expiry_date"] = recommendation.get("expiry_date")
+        return
+
+    restock_data.append(recommendation)
 
 
 def combine_requirements(requirement_groups):
@@ -325,7 +378,7 @@ def calculate_restock_needs(inventory_data, reference_date=None):
 def refresh_restock_table(restock_data, inventory_data, reference_date=None):
     """Replace the live restock table with recommendations from final inventory."""
     # Step 7: rebuild the restock table after all orders have been processed so it
-    # reflects the final inventory state instead of intermediate order failures.
+    # reflects the final inventory state; failed-order blockers are merged after this.
     # Incomplete / follow-up: this replaces the whole restock table each run, so it
     # does not preserve historical/manual restock notes outside the current simulation.
     restock_data.clear()
@@ -346,6 +399,7 @@ def process_orders(
 
     processed_orders = []
     working_inventory = deepcopy(inventory_data)
+    failed_order_restock = []
 
     # Step 0: use a working inventory snapshot during processing so each order is
     # checked against stock remaining after previous successful orders, while the
@@ -437,6 +491,8 @@ def process_orders(
             order_result["fulfilled"] = False
             order_result["reason"] = " | ".join(reason_parts)
             update_status_entry(status_data, order["order_id"], False, order_result["reason"])
+            for detail in missing_ingredients:
+                failed_order_restock.append(build_failed_order_restock_entry(detail))
         elif inventory_check["all_available"]:
             # Step 4: when every required ingredient is available, mark the order as
             # delivered and deduct the used grams from the working inventory only.
@@ -458,11 +514,15 @@ def process_orders(
             order_result["fulfilled"] = False
             order_result["reason"] = f"Unavailable ingredients: {missing_names}"
             update_status_entry(status_data, order["order_id"], False, order_result["reason"])
+            for detail in missing_ingredients:
+                failed_order_restock.append(build_failed_order_restock_entry(detail))
 
         processed_orders.append(order_result)
 
     apply_final_inventory_snapshot(inventory_data, working_inventory)
     refresh_restock_table(restock_data, inventory_data, reference_date)
+    for recommendation in failed_order_restock:
+        merge_restock_recommendation(restock_data, recommendation)
 
     return processed_orders
 

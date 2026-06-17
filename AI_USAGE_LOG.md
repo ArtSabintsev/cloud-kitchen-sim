@@ -84,11 +84,54 @@ accepted/rejected each AI finding, and owned the final code.
   correctness; is disabling on out-of-stock/expired but not low consistent?"
 - **Response summary:** Consistency confirmed. Flagged one **High** gap: it
   disabled on `qty == 0` but not on "nonzero yet below one serving."
-- **Accepted:** Added an `Insufficient quantity` branch + a test. Final suite: 37
+- **Accepted:** Added an `Insufficient quantity` branch + a test. Suite: 37
   tests, all passing.
 - **Rejected:** Codex's note that adding `recipe_data` before `reference_date` in
   `build_summary` is a back-compat risk — every real call site uses keywords or
   correct positions, and there are no external callers, so I left it.
+
+---
+
+## Interaction 7 — Final submission hardening (Codex)
+- **Task:** Fix final compliance issues before pushing: stale test-count
+  documentation, clearer required prompt-template evidence, and a stricter Task
+  6 interpretation that failed-order ingredient blockers should appear in
+  restock even when final stock is not below the general low-stock threshold.
+- **Prompt (Codex):** "ok fix the issues and push"
+- **Response summary:** Codex rechecked the repo, identified the concrete files
+  to change, implemented a failed-order restock merge path, added a regression
+  test, updated documentation counts, and prepared the branch for commit/push.
+- **Accepted:** The Task 6 restock merge and new regression test. Final suite:
+  38 tests, all passing.
+- **Rejected/deferred:** No broader refactor; the change stayed scoped to the
+  grading issues found in the final review.
+
+---
+
+## Required prompt-template evidence
+
+The assignment asked for planning, task-breakdown, implementation, validation,
+and debugging-style prompts rather than one giant "build everything" prompt.
+The log above groups minor prompts for readability; representative prompts used
+or adapted during the project were:
+
+- **Planning Prompt:** "I want to build expiry-aware inventory availability and
+  restock reporting. Before writing any code, give me a high-level plan. What
+  components do I need and what should I build first?"
+- **Task Breakdown Prompt:** "Here is component restock and expiry rules from
+  our plan. Break it into individual implementation tasks. Keep each task small
+  enough to implement in a single prompt."
+- **Implementation Prompt:** "Implement Task 8: generate restock
+  recommendations for out-of-stock, low-stock, expired, and expiring-soon
+  ingredients. Use Python. Keep the code simple and add comments explaining each
+  section. Do not implement any other tasks yet."
+- **Validation Hook Prompt:** "After generating the code, add inline comments or
+  notes that identify: assumptions I should verify, parts you are uncertain
+  about, and sections that are incomplete or require follow-up."
+- **Debugging Prompt:** "Here is the code behavior and failing expectation:
+  expired ingredients are still being treated as usable. Explain what is wrong
+  and why. Then provide a corrected version with comments explaining what
+  changed and why."
 
 ---
 

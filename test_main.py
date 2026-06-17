@@ -198,6 +198,52 @@ class TestOrderFulfillment(unittest.TestCase):
         self.assertEqual(bun_restock["qty_needed_grams"], 10000)
         self.assertEqual(bun_restock["reason"], "Out of stock")
 
+    def test_failed_order_adds_restock_even_when_remaining_stock_is_not_low(self):
+        """A failed order should restock its blocker even if final stock is above 1,000 g."""
+        recipe_data = [
+            {
+                "recipe_id": 1,
+                "name": "Large Sauce Batch",
+                "ingredients": [{"name": "Tomato Sauce", "qty_grams": 6000}],
+            }
+        ]
+        inventory_data = [
+            {"ingredient": "Tomato Sauce", "qty_grams": 5000, "expiry_date": "2026-12-31"}
+        ]
+        order_data = [
+            {
+                "order_id": 203,
+                "brand": "Test Kitchen",
+                "items": [{"item": "Large Sauce Batch", "qty": 1}],
+            }
+        ]
+        status_data = []
+        restock_data = []
+
+        processed_orders = process_orders(
+            recipe_data,
+            inventory_data,
+            order_data,
+            status_data,
+            restock_data,
+            reference_date=date(2026, 6, 3),
+        )
+
+        self.assertFalse(processed_orders[0]["fulfilled"])
+        self.assertEqual(inventory_data[0]["qty_grams"], 5000)
+        self.assertEqual(
+            restock_data,
+            [
+                {
+                    "item": "Tomato Sauce",
+                    "qty_needed_grams": 5000,
+                    "reasons": ["Insufficient quantity for order"],
+                    "reason": "Insufficient quantity for order",
+                    "expiry_date": "2026-12-31",
+                }
+            ],
+        )
+
     def test_process_orders_deducts_inventory_after_successful_delivery(self):
         """A delivered order should reduce inventory by the required grams."""
         recipe_data = deepcopy(load_recipes())
@@ -317,7 +363,10 @@ class TestCumulativeInventoryDeduction(unittest.TestCase):
         self.assertFalse(status_data[1]["delivered"])
         self.assertEqual(restock_data[0]["item"], "Cheese")
         self.assertEqual(restock_data[0]["qty_needed_grams"], 9600)
-        self.assertEqual(restock_data[0]["reason"], "Running low on stock")
+        self.assertEqual(
+            restock_data[0]["reasons"],
+            ["Running low on stock", "Insufficient quantity for order"],
+        )
 
     def test_final_inventory_matches_expected_remaining_quantities(self):
         """Final inventory should reflect all successful cumulative deductions."""

@@ -6,7 +6,7 @@ Follows the assignment's suggested structure. Companion documents:
 
 ## 1. Project Setup
 Files: `seed_data.py` (data), `main.py` (logic + reporting), `test_main.py`
-(37 unit tests), `PROJECT_SPEC.md`, `AI_USAGE_LOG.md`, `REFLECTION.md`, this
+(38 unit tests), `PROJECT_SPEC.md`, `AI_USAGE_LOG.md`, `REFLECTION.md`, this
 write-up, and a generated `REPORT.md`.
 
 - **Run:** `python3 main.py` — prints the full simulation and writes `REPORT.md`.

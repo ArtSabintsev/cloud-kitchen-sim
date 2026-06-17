@@ -21,7 +21,7 @@ debugging — not just shipping working code.
 | --- | --- | --- |
 | `seed_data.py` | Starting data: recipes, inventory, orders, restock, status | ✅ |
 | `main.py` | Simulation logic + console + Markdown report | ✅ |
-| `test_main.py` | Unit tests (32) | ✅ |
+| `test_main.py` | Unit tests (38) | ✅ |
 | `PROJECT_SPEC.md` | This file | ✅ (living) |
 | `AI_USAGE_LOG.md` | Record of AI interactions | ✅ |
 | `REFLECTION.md` | 400–600 word reflection | ✅ |
@@ -33,7 +33,9 @@ debugging — not just shipping working code.
 - `days_until_expiry`, `check_inventory_availability` — expiry-aware availability (Req 3).
 - `deduct_inventory`, `process_orders` — fulfillment + cumulative deduction (Req 4–5).
 - `calculate_restock_needs`, `refresh_restock_table` — restock & expiry rules (Req 6).
-- `summarize_expiry_concerns`, `build_summary`, `print_summary`, `write_markdown_report` — business summary + report (Req 7 / Option D).
+- `summarize_expiry_concerns`, `evaluate_menu_availability`, `build_summary`,
+  `print_summary`, `write_markdown_report` — business summary + Option C/D
+  reporting (Req 7).
 
 ## 3. Data Structures (as provided — inspected, not assumed)
 
@@ -83,26 +85,28 @@ debugging — not just shipping working code.
    reason (joined str), expiry_date}`. The `reasons` list is the source of truth
    for the multiple-reasons requirement; `reason` is a display/back-compat join.
 
-4. **Restock table is rebuilt from final inventory** after all orders, so it
-   reflects ending stock rather than intermediate per-order failures.
+4. **Restock table is rebuilt from final inventory** after all orders, then
+   merged with failed-order blockers so Task 6 shortages are not lost when the
+   final stock level is above the general low-stock threshold.
 
 5. **Working-copy discipline.** `process_orders` deducts against a deep copy and
    writes back only at the end; `main()` deep-copies seed tables so seed data is
    never mutated across runs/tests.
 
-## 6. Testing Plan / Status — ✅ 32 tests, all passing
+## 6. Testing Plan / Status — ✅ 38 tests, all passing
 
 - Loaders: types, counts, key fields (Req 1 / Task 3).
 - Recipe lookup + scaling, missing recipe (Task 4).
 - Availability: fresh available, expired unusable, missing (Task 5).
 - Fulfillment: delivered, failed-on-shortage, expired-blocked, deduction, no
-  deduction on failure (Task 6).
+  deduction on failure, failed-order blockers added to restock even when final
+  stock is not generally low (Task 6).
 - Cumulative: shared-ingredient deduction, later-order starvation, final
   quantities (Task 7).
 - Restock: out/low/expiring/expired, **multiple reasons**, qty per branch,
   date boundaries (0 / 5 / 6 days) (Task 8).
-- Summary: delivered/not-delivered counts, expiry concerns, Markdown pipe
-  escaping (Task 9 / Option D).
+- Summary/menu/reporting: delivered/not-delivered counts, expiry concerns,
+  Markdown pipe escaping, Option C menu disabling (Task 9 / Options C-D).
 
 Run: `python3 -m unittest -v`
 

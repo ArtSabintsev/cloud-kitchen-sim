@@ -25,7 +25,7 @@ Prints the full simulation and the end-of-shift summary, and writes `REPORT.md`
 ```bash
 python3 -m unittest -v
 ```
-37 unit tests covering loading, recipe lookup, availability, fulfillment,
+38 unit tests covering loading, recipe lookup, availability, fulfillment,
 cumulative deduction, restock/expiry rules, the business summary, and the
 menu-disabling and reporting enhancements.
 
