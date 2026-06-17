@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Assignment brief (instructor-provided PDF; not a deliverable)
+AI-Assisted Cloud Kitchen Inventory Simulation.pdf
