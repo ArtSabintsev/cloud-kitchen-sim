@@ -1,4 +1,4 @@
-# Cloud Kitchen Inventory Simulation
+# JHU Module 3 - Cloud Kitchen Inventory Simulation
 
 > **Johns Hopkins University — Module 3 / Assignment 3:** AI-Assisted Coding for
 > a Cloud Kitchen Inventory Simulation.
