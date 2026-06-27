@@ -39,7 +39,7 @@ menu-disabling and reporting enhancements.
 | `AI_USAGE_LOG.md` | How AI was used (Claude + Codex) |
 | `REFLECTION.md` | Reflection on AI-assisted coding |
 | `WRITEUP.md` | Full written response |
-| `REPORT.md` | Generated business report (created on run) |
+| `REPORT.md` | Generated business report included for review; rerunning `main.py` updates it |
 
 ## Key design choice
 The simulation runs at a fixed scenario date (`SIMULATION_DATE = 2026-05-10`),
